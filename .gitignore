@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Logs
+tradeOS_india/logs/*.log
+
+# Database
+tradeOS_india/storage/*.db
+tradeOS_india/storage/contracts/*.parquet
+tradeOS_india/storage/candles/*.parquet
+
+# App state (contains user config)
+tradeOS_india/config/app_state.json
+
+# Environment variables
+.env
+tradeOS_india/.env
+
+# Pytest
+.pytest_cache/
+tradeOS_india/.pytest_cache/
+
+# Secrets (never commit)
+*.key
+*.pem
+credentials.json

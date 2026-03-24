@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeOS India - Setup Wizard</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TradeOS India — 4-Step Setup Wizard (Dark Theme)
+   Self-contained HTML/CSS/JS. No external CDN.
+   ═══════════════════════════════════════════════════════════════ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --bg-input: #3c3c3c;
+  --bg-hover: #383838;
+  --accent: #007acc;
+  --accent-hover: #1a8ad4;
+  --text-primary: #cccccc;
+  --text-secondary: #858585;
+  --text-bright: #e0e0e0;
+  --border: #3e3e42;
+  --success: #4ec9b0;
+  --warning: #d7ba7d;
+  --error: #f44747;
+  --purple: #c586c0;
+  --green: #6a9955;
+  --teal: #4ec9b0;
+  --radius: 6px;
+}
+
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+}
+
+/* ─── Layout ──────────────────────────────────────────────── */
+.wizard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.wizard-header {
+  padding: 20px 28px 0;
+  flex-shrink: 0;
+}
+
+.wizard-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.wizard-header p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ─── Step indicator ──────────────────────────────────────── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  padding: 18px 28px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.step-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.step-dot.completed {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  margin: 0 6px;
+  transition: background 0.3s;
+}
+
+.step-line.completed { background: var(--success); }
+
+.step-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  margin-right: 12px;
+  white-space: nowrap;
+}
+
+.step-label.active { color: var(--accent); font-weight: 600; }
+.step-label.completed { color: var(--success); }
+
+/* ─── Step content ────────────────────────────────────────── */
+.step-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 28px 12px;
+}
+
+.step-content::-webkit-scrollbar { width: 6px; }
+.step-content::-webkit-scrollbar-track { background: transparent; }
+.step-content::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin: 16px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Toggle switch ───────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input { display: none; }
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-input);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: 0.3s;
+  border: 1px solid var(--border);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); background: #fff; }
+
+.toggle-label { font-size: 13px; }
+.toggle-label .sub { font-size: 11px; color: var(--text-secondary); display: block; }
+
+/* Live mode warning */
+.live-warning {
+  display: none;
+  background: rgba(244, 71, 71, 0.12);
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--error);
+  margin: 8px 0;
+}
+
+.live-warning.visible { display: block; }
+
+/* ─── Checkbox grid ───────────────────────────────────────── */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.checkbox-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.checkbox-card:hover { border-color: var(--accent); background: var(--bg-hover); }
+.checkbox-card.checked { border-color: var(--accent); background: rgba(0, 122, 204, 0.1); }
+
+.checkbox-card input[type="checkbox"] { display: none; }
+
+.check-box {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--text-secondary);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: 0.2s;
+}
+
+.checkbox-card.checked .check-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.check-box::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translate(0, -1px);
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.checkbox-card.checked .check-box::after { opacity: 1; }
+
+.checkbox-card .label-text { font-size: 12px; }
+.checkbox-card .label-sub { font-size: 10px; color: var(--text-secondary); }
+
+/* ─── Daily loss input ────────────────────────────────────── */
+.loss-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  flex: 0 0 180px;
+}
+
+.input-group .prefix {
+  padding: 8px 10px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  border-right: 1px solid var(--border);
+}
+
+.input-group input {
+  background: transparent;
+  border: none;
+  color: var(--text-bright);
+  font-size: 14px;
+  padding: 8px 10px;
+  width: 100%;
+  outline: none;
+}
+
+.loss-badge {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.loss-badge.conservative { background: rgba(78, 201, 176, 0.15); color: var(--success); }
+.loss-badge.moderate { background: rgba(215, 186, 125, 0.15); color: var(--warning); }
+.loss-badge.aggressive { background: rgba(244, 71, 71, 0.15); color: var(--error); }
+
+.preset-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.preset-btn {
+  padding: 5px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+.preset-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ─── Broker cards ────────────────────────────────────────── */
+.broker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.broker-card {
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+
+.broker-card:hover { border-color: var(--accent); }
+.broker-card.selected { border-color: var(--accent); background: rgba(0, 122, 204, 0.1); }
+.broker-card.disabled { opacity: 0.4; cursor: not-allowed; }
+
+.broker-card .broker-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+.broker-card .broker-status { font-size: 10px; margin-top: 4px; }
+.broker-card .broker-status.active { color: var(--success); }
+.broker-card .broker-status.soon { color: var(--text-secondary); }
+
+.broker-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(215, 186, 125, 0.2);
+  color: var(--warning);
+}
+
+/* ─── Credential form ─────────────────────────────────────── */
+.cred-form { margin: 12px 0; }
+
+.form-field {
+  margin-bottom: 10px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-bright);
+  font-size: 13px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.form-field input:focus { border-color: var(--accent); }
+
+.form-field input::placeholder { color: var(--text-secondary); }
+
+.test-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 4px;
+}
+
+.test-btn:hover { background: var(--accent-hover); }
+
+.test-result {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  display: none;
+}
+
+.test-result.success { display: block; background: rgba(78, 201, 176, 0.1); color: var(--success); border: 1px solid var(--success); }
+.test-result.error { display: block; background: rgba(244, 71, 71, 0.1); color: var(--error); border: 1px solid var(--error); }
+
+/* ─── LLM provider cards ──────────────────────────────────── */
+.llm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.llm-card {
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.llm-card:hover { border-color: var(--text-secondary); }
+.llm-card.selected { border-width: 2px; }
+.llm-card.claude.selected { border-color: var(--purple); background: rgba(197, 134, 192, 0.08); }
+.llm-card.openai.selected { border-color: var(--green); background: rgba(106, 153, 85, 0.08); }
+.llm-card.groq.selected { border-color: var(--teal); background: rgba(78, 201, 176, 0.08); }
+
+.llm-card .llm-icon { font-size: 24px; margin-bottom: 6px; }
+.llm-card .llm-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+.llm-card .llm-model { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+.llm-card .llm-cost { font-size: 10px; color: var(--text-secondary); margin-top: 4px; }
+
+.llm-connect-btn {
+  margin-top: 8px;
+  padding: 4px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.llm-connect-btn:hover { border-color: var(--accent); color: var(--accent); }
+.llm-connect-btn.connected { background: var(--success); border-color: var(--success); color: #fff; }
+
+/* ─── Agent toggle cards ──────────────────────────────────── */
+.agent-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.agent-card {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.agent-card .agent-info { flex: 1; }
+.agent-card .agent-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+.agent-card .agent-desc { font-size: 11px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+
+/* ─── Summary (Step 4) ────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.summary-card {
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.summary-card .sc-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.summary-card .sc-value {
+  font-size: 14px;
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.summary-card .sc-detail {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.live-mode-warning {
+  background: rgba(244, 71, 71, 0.1);
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 12px 0;
+  display: none;
+}
+
+.live-mode-warning .warn-title { color: var(--error); font-weight: 600; font-size: 13px; }
+.live-mode-warning .warn-text { color: var(--text-secondary); font-size: 11px; margin-top: 4px; }
+
+/* ─── Footer buttons ──────────────────────────────────────── */
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 8px 24px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  border: none;
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover { border-color: var(--text-secondary); }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-launch {
+  background: var(--success);
+  color: #1e1e1e;
+  padding: 10px 32px;
+  font-size: 14px;
+}
+
+.btn-launch:hover { background: #5bd4bc; }
+
+.footer-info {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+</style>
+</head>
+<body>
+
+<div class="wizard-container">
+  <!-- Header -->
+  <div class="wizard-header">
+    <h1>TradeOS India Setup</h1>
+    <p>Configure your trading environment in 4 simple steps</p>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot-1">1</div>
+    <span class="step-label active" id="lbl-1">Trading</span>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2">2</div>
+    <span class="step-label" id="lbl-2">Broker</span>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3">3</div>
+    <span class="step-label" id="lbl-3">LLM &amp; Agents</span>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-dot" id="dot-4">4</div>
+    <span class="step-label" id="lbl-4">Launch</span>
+  </div>
+
+  <!-- Step Content -->
+  <div class="step-content">
+
+    <!-- ═══════ STEP 1: Trading Mode + Markets ═══════ -->
+    <div class="step-panel active" id="step-1">
+      <div class="section-title">Trading Mode</div>
+      <div class="toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="mode-toggle" onchange="onModeToggle()">
+          <span class="toggle-slider"></span>
+        </label>
+        <div class="toggle-label">
+          <span id="mode-label">Paper Trading</span>
+          <span class="sub" id="mode-sub">Simulated orders, no real money at risk</span>
+        </div>
+      </div>
+      <div class="live-warning" id="live-warning">
+        WARNING: Live mode will place real orders with real money through your broker.
+        Ensure you understand the risks before proceeding.
+      </div>
+
+      <div class="section-title">Markets</div>
+      <div class="checkbox-grid">
+        <label class="checkbox-card checked" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="NSE" checked>
+          <div class="check-box"></div>
+          <div><div class="label-text">NSE Equity</div><div class="label-sub">Cash segment</div></div>
+        </label>
+        <label class="checkbox-card checked" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="NFO" checked>
+          <div class="check-box"></div>
+          <div><div class="label-text">NFO Options</div><div class="label-sub">F&amp;O segment</div></div>
+        </label>
+        <label class="checkbox-card" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="BSE">
+          <div class="check-box"></div>
+          <div><div class="label-text">BSE</div><div class="label-sub">Bombay Stock Exchange</div></div>
+        </label>
+        <label class="checkbox-card" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="MCX">
+          <div class="check-box"></div>
+          <div><div class="label-text">MCX Commodity</div><div class="label-sub">Commodity trading</div></div>
+        </label>
+        <label class="checkbox-card" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="CDS">
+          <div class="check-box"></div>
+          <div><div class="label-text">CDS Currency</div><div class="label-sub">Currency derivatives</div></div>
+        </label>
+        <label class="checkbox-card" onclick="toggleCheck(this)">
+          <input type="checkbox" name="market" value="INDEX">
+          <div class="check-box"></div>
+          <div><div class="label-text">Index Options</div><div class="label-sub">NIFTY, BANKNIFTY</div></div>
+        </label>
+      </div>
+
+      <div class="section-title">Daily Loss Limit</div>
+      <div class="loss-input-row">
+        <div class="input-group">
+          <span class="prefix">&#x20B9;</span>
+          <input type="number" id="daily-loss" value="5000" min="500" max="500000" oninput="onLossChange()">
+        </div>
+        <span class="loss-badge moderate" id="loss-badge">Moderate</span>
+      </div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="setLoss(2000)">&#x20B9;2K</button>
+        <button class="preset-btn active" onclick="setLoss(5000)">&#x20B9;5K</button>
+        <button class="preset-btn" onclick="setLoss(10000)">&#x20B9;10K</button>
+        <button class="preset-btn" onclick="setLoss(25000)">&#x20B9;25K</button>
+        <button class="preset-btn" onclick="setLoss(50000)">&#x20B9;50K</button>
+      </div>
+    </div>
+
+    <!-- ═══════ STEP 2: Broker Selection ═══════ -->
+    <div class="step-panel" id="step-2">
+      <div class="section-title">Select Broker</div>
+      <div class="broker-grid">
+        <div class="broker-card selected" onclick="selectBroker('fyers', this)">
+          <div class="broker-name">Fyers</div>
+          <div class="broker-status active">Available</div>
+        </div>
+        <div class="broker-card disabled">
+          <div class="broker-name">AngelOne</div>
+          <div class="broker-status soon">Coming Soon</div>
+          <span class="broker-badge">Soon</span>
+        </div>
+        <div class="broker-card disabled">
+          <div class="broker-name">Zerodha</div>
+          <div class="broker-status soon">Coming Soon</div>
+          <span class="broker-badge">Soon</span>
+        </div>
+        <div class="broker-card disabled">
+          <div class="broker-name">Upstox</div>
+          <div class="broker-status soon">Coming Soon</div>
+          <span class="broker-badge">Soon</span>
+        </div>
+        <div class="broker-card disabled">
+          <div class="broker-name">Dhan</div>
+          <div class="broker-status soon">Coming Soon</div>
+          <span class="broker-badge">Soon</span>
+        </div>
+        <div class="broker-card disabled">
+          <div class="broker-name">Shoonya</div>
+          <div class="broker-status soon">Coming Soon</div>
+          <span class="broker-badge">Soon</span>
+        </div>
+      </div>
+
+      <div class="section-title">Fyers Credentials</div>
+      <div class="cred-form" id="cred-form-fyers">
+        <div class="form-field">
+          <label>App ID</label>
+          <input type="text" id="fyers-app-id" placeholder="e.g. XXXXXXXX-100">
+        </div>
+        <div class="form-field">
+          <label>Secret Key</label>
+          <input type="password" id="fyers-secret" placeholder="Your Fyers secret key">
+        </div>
+        <div class="form-field">
+          <label>Redirect URI</label>
+          <input type="text" id="fyers-redirect" value="http://127.0.0.1:8182/callback" readonly style="opacity:0.6">
+        </div>
+        <div class="form-field">
+          <label>PIN / TOTP</label>
+          <input type="password" id="fyers-pin" placeholder="4-digit PIN or TOTP code">
+        </div>
+        <button class="test-btn" onclick="testBrokerConnection()">Test Connection</button>
+        <div class="test-result" id="broker-test-result"></div>
+      </div>
+    </div>
+
+    <!-- ═══════ STEP 3: LLM + Agents ═══════ -->
+    <div class="step-panel" id="step-3">
+      <div class="section-title">LLM Provider</div>
+      <div class="llm-grid">
+        <div class="llm-card claude selected" onclick="selectLLM('claude', this)">
+          <div class="llm-icon">&#9672;</div>
+          <div class="llm-name">Claude</div>
+          <div class="llm-model">claude-sonnet-4-6</div>
+          <div class="llm-cost">~&#x20B9;0.9 / 1K tokens</div>
+          <button class="llm-connect-btn" id="btn-claude" onclick="event.stopPropagation(); connectLLM('claude')">Connect</button>
+        </div>
+        <div class="llm-card openai" onclick="selectLLM('openai', this)">
+          <div class="llm-icon">&#9673;</div>
+          <div class="llm-name">OpenAI</div>
+          <div class="llm-model">gpt-4o</div>
+          <div class="llm-cost">~&#x20B9;1.1 / 1K tokens</div>
+          <button class="llm-connect-btn" id="btn-openai" onclick="event.stopPropagation(); connectLLM('openai')">Connect</button>
+        </div>
+        <div class="llm-card groq" onclick="selectLLM('groq', this)">
+          <div class="llm-icon">&#9670;</div>
+          <div class="llm-name">Groq</div>
+          <div class="llm-model">llama-3.1-70b</div>
+          <div class="llm-cost">~&#x20B9;0.05 / 1K tokens</div>
+          <button class="llm-connect-btn" id="btn-groq" onclick="event.stopPropagation(); connectLLM('groq')">Connect</button>
+        </div>
+      </div>
+
+      <div class="section-title">AI Agents</div>
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="agent-info">
+            <div class="agent-name">Strategy Agent</div>
+            <div class="agent-desc">Generates BUY/SELL/HOLD signals using LLM analysis of market data and indicators</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="agent-strategy" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="agent-card">
+          <div class="agent-info">
+            <div class="agent-name">Risk Agent</div>
+            <div class="agent-desc">Validates position sizing, enforces daily loss limits and circuit breakers</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="agent-risk" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="agent-card">
+          <div class="agent-info">
+            <div class="agent-name">Execution Agent</div>
+            <div class="agent-desc">Places orders, monitors fills, analyzes slippage and partial fills</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="agent-execution" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="agent-card">
+          <div class="agent-info">
+            <div class="agent-name">Research Agent</div>
+            <div class="agent-desc">Runs backtests, Monte Carlo simulations, and detects overfitting</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="agent-research" checked><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ STEP 4: Review + Launch ═══════ -->
+    <div class="step-panel" id="step-4">
+      <div class="section-title">Configuration Summary</div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="sc-title">Trading Mode</div>
+          <div class="sc-value" id="sum-mode">Paper Trading</div>
+          <div class="sc-detail" id="sum-mode-detail">Simulated, no real orders</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-title">Daily Loss Limit</div>
+          <div class="sc-value" id="sum-loss">&#x20B9;5,000</div>
+          <div class="sc-detail" id="sum-loss-detail">Moderate risk</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-title">Markets</div>
+          <div class="sc-value" id="sum-markets">NSE, NFO</div>
+          <div class="sc-detail" id="sum-markets-detail">2 segments</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-title">Broker</div>
+          <div class="sc-value" id="sum-broker">Fyers</div>
+          <div class="sc-detail" id="sum-broker-detail">Not connected</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-title">Primary LLM</div>
+          <div class="sc-value" id="sum-llm">Claude</div>
+          <div class="sc-detail" id="sum-llm-detail">claude-sonnet-4-6</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-title">Agents</div>
+          <div class="sc-value" id="sum-agents">4 / 4 enabled</div>
+          <div class="sc-detail" id="sum-agents-detail">Strategy, Risk, Execution, Research</div>
+        </div>
+      </div>
+
+      <div class="live-mode-warning" id="sum-live-warning">
+        <div class="warn-title">&#9888; Live Trading Mode</div>
+        <div class="warn-text">Real orders will be placed. Ensure your broker credentials are correct and risk limits are configured properly.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="wizard-footer">
+    <div class="footer-info" id="footer-info">Step 1 of 4</div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-secondary" id="btn-back" onclick="goBack()" disabled>Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goNext()">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   TradeOS India — Setup Wizard Logic
+   ═══════════════════════════════════════════════════════════════ */
+
+// State
+var currentStep = 1;
+var totalSteps = 4;
+var config = {
+  mode: 'paper',
+  markets: ['NSE', 'NFO'],
+  daily_loss_limit: 5000,
+  broker: 'fyers',
+  broker_connected: false,
+  fyers_app_id: '',
+  fyers_secret: '',
+  fyers_pin: '',
+  llm_primary: 'claude',
+  llm_connected: {},
+  agents: { strategy: true, risk: true, execution: true, research: true }
+};
+
+// QWebChannel bridge (will be set by Python)
+var pyBridge = null;
+if (typeof QWebChannel !== 'undefined') {
+  new QWebChannel(qt.webChannelTransport, function(channel) {
+    pyBridge = channel.objects.bridge;
+  });
+}
+
+// ─── Navigation ──────────────────────────────────────────
+function goNext() {
+  if (currentStep === totalSteps) {
+    launchApp();
+    return;
+  }
+  if (currentStep < totalSteps) {
+    updateConfig();
+    currentStep++;
+    showStep(currentStep);
+    if (currentStep === totalSteps) updateSummary();
+  }
+}
+
+function goBack() {
+  if (currentStep > 1) {
+    currentStep--;
+    showStep(currentStep);
+  }
+}
+
+function showStep(step) {
+  // Hide all panels
+  for (var i = 1; i <= totalSteps; i++) {
+    document.getElementById('step-' + i).classList.remove('active');
+    document.getElementById('dot-' + i).classList.remove('active', 'completed');
+    document.getElementById('lbl-' + i).classList.remove('active', 'completed');
+  }
+
+  // Mark completed steps
+  for (var i = 1; i < step; i++) {
+    document.getElementById('dot-' + i).classList.add('completed');
+    document.getElementById('dot-' + i).textContent = '\u2713';
+    document.getElementById('lbl-' + i).classList.add('completed');
+    if (i < totalSteps) document.getElementById('line-' + i).classList.add('completed');
+  }
+
+  // Show current
+  document.getElementById('step-' + step).classList.add('active');
+  document.getElementById('dot-' + step).classList.add('active');
+  document.getElementById('dot-' + step).textContent = step;
+  document.getElementById('lbl-' + step).classList.add('active');
+
+  // Clear future lines
+  for (var i = step; i < totalSteps; i++) {
+    document.getElementById('line-' + i).classList.remove('completed');
+  }
+
+  // Button state
+  document.getElementById('btn-back').disabled = (step === 1);
+  var nextBtn = document.getElementById('btn-next');
+  if (step === totalSteps) {
+    nextBtn.textContent = 'Launch TradeOS';
+    nextBtn.className = 'btn btn-launch';
+  } else {
+    nextBtn.textContent = 'Next';
+    nextBtn.className = 'btn btn-primary';
+  }
+
+  document.getElementById('footer-info').textContent = 'Step ' + step + ' of ' + totalSteps;
+}
+
+// ─── Step 1: Trading mode ────────────────────────────────
+function onModeToggle() {
+  var checked = document.getElementById('mode-toggle').checked;
+  config.mode = checked ? 'live' : 'paper';
+  document.getElementById('mode-label').textContent = checked ? 'Live Trading' : 'Paper Trading';
+  document.getElementById('mode-sub').textContent = checked
+    ? 'Real orders will be placed through your broker'
+    : 'Simulated orders, no real money at risk';
+  document.getElementById('live-warning').classList.toggle('visible', checked);
+}
+
+function toggleCheck(el) {
+  var cb = el.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  el.classList.toggle('checked', cb.checked);
+}
+
+function setLoss(value) {
+  document.getElementById('daily-loss').value = value;
+  config.daily_loss_limit = value;
+  onLossChange();
+  // Update preset buttons
+  document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+  event.target.classList.add('active');
+}
+
+function onLossChange() {
+  var val = parseInt(document.getElementById('daily-loss').value) || 0;
+  config.daily_loss_limit = val;
+  var badge = document.getElementById('loss-badge');
+  if (val <= 3000) {
+    badge.textContent = 'Conservative';
+    badge.className = 'loss-badge conservative';
+  } else if (val <= 15000) {
+    badge.textContent = 'Moderate';
+    badge.className = 'loss-badge moderate';
+  } else {
+    badge.textContent = 'Aggressive';
+    badge.className = 'loss-badge aggressive';
+  }
+}
+
+// ─── Step 2: Broker ──────────────────────────────────────
+function selectBroker(name, el) {
+  if (el.classList.contains('disabled')) return;
+  document.querySelectorAll('.broker-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  config.broker = name;
+}
+
+function testBrokerConnection() {
+  var result = document.getElementById('broker-test-result');
+  var appId = document.getElementById('fyers-app-id').value.trim();
+  var secret = document.getElementById('fyers-secret').value.trim();
+
+  if (!appId || !secret) {
+    result.className = 'test-result error';
+    result.textContent = 'Please enter App ID and Secret Key';
+    return;
+  }
+
+  config.fyers_app_id = appId;
+  config.fyers_secret = secret;
+  config.fyers_pin = document.getElementById('fyers-pin').value.trim();
+
+  result.className = 'test-result';
+  result.style.display = 'block';
+  result.style.color = 'var(--text-secondary)';
+  result.textContent = 'Testing connection...';
+
+  if (pyBridge && pyBridge.test_broker_connection) {
+    var creds = JSON.stringify({ app_id: appId, secret_key: secret, pin: config.fyers_pin });
+    pyBridge.test_broker_connection('fyers', creds, function(resp) {
+      try {
+        var data = JSON.parse(resp);
+        if (data.success) {
+          result.className = 'test-result success';
+          result.textContent = 'Connected successfully! ' + (data.name || '');
+          config.broker_connected = true;
+        } else {
+          result.className = 'test-result error';
+          result.textContent = 'Connection failed: ' + (data.error || 'Unknown error');
+        }
+      } catch(e) {
+        result.className = 'test-result error';
+        result.textContent = 'Error: ' + resp;
+      }
+    });
+  } else {
+    // Demo mode (no Python bridge)
+    setTimeout(function() {
+      result.className = 'test-result success';
+      result.textContent = 'Demo mode: Connection simulated successfully';
+      config.broker_connected = true;
+    }, 800);
+  }
+}
+
+// ─── Step 3: LLM + Agents ───────────────────────────────
+function selectLLM(provider, el) {
+  document.querySelectorAll('.llm-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  config.llm_primary = provider;
+}
+
+function connectLLM(provider) {
+  var btn = document.getElementById('btn-' + provider);
+
+  if (pyBridge && pyBridge.start_oauth) {
+    btn.textContent = 'Connecting...';
+    pyBridge.start_oauth(provider, function(resp) {
+      try {
+        var data = JSON.parse(resp);
+        if (data.success) {
+          btn.textContent = 'Connected';
+          btn.classList.add('connected');
+          config.llm_connected[provider] = true;
+        } else {
+          btn.textContent = 'Failed';
+          setTimeout(function() { btn.textContent = 'Connect'; }, 2000);
+        }
+      } catch(e) {
+        btn.textContent = 'Connect';
+      }
+    });
+  } else {
+    // Demo mode
+    btn.textContent = 'Connecting...';
+    setTimeout(function() {
+      btn.textContent = 'Connected';
+      btn.classList.add('connected');
+      config.llm_connected[provider] = true;
+    }, 600);
+  }
+}
+
+// ─── Config collection ───────────────────────────────────
+function updateConfig() {
+  // Markets
+  config.markets = [];
+  document.querySelectorAll('input[name="market"]:checked').forEach(function(cb) {
+    config.markets.push(cb.value);
+  });
+
+  // Agents
+  config.agents.strategy = document.getElementById('agent-strategy').checked;
+  config.agents.risk = document.getElementById('agent-risk').checked;
+  config.agents.execution = document.getElementById('agent-execution').checked;
+  config.agents.research = document.getElementById('agent-research').checked;
+
+  // Broker creds
+  config.fyers_app_id = document.getElementById('fyers-app-id').value.trim();
+  config.fyers_secret = document.getElementById('fyers-secret').value.trim();
+  config.fyers_pin = document.getElementById('fyers-pin').value.trim();
+}
+
+// ─── Step 4: Summary ─────────────────────────────────────
+function updateSummary() {
+  updateConfig();
+
+  document.getElementById('sum-mode').textContent = config.mode === 'live' ? 'Live Trading' : 'Paper Trading';
+  document.getElementById('sum-mode-detail').textContent = config.mode === 'live' ? 'Real broker orders' : 'Simulated, no real orders';
+
+  var lossVal = config.daily_loss_limit;
+  document.getElementById('sum-loss').textContent = '\u20B9' + lossVal.toLocaleString('en-IN');
+  var riskLevel = lossVal <= 3000 ? 'Conservative' : (lossVal <= 15000 ? 'Moderate' : 'Aggressive');
+  document.getElementById('sum-loss-detail').textContent = riskLevel + ' risk';
+
+  document.getElementById('sum-markets').textContent = config.markets.join(', ') || 'None';
+  document.getElementById('sum-markets-detail').textContent = config.markets.length + ' segment(s)';
+
+  document.getElementById('sum-broker').textContent = config.broker.charAt(0).toUpperCase() + config.broker.slice(1);
+  document.getElementById('sum-broker-detail').textContent = config.broker_connected ? 'Connected' : 'Not connected';
+
+  var llmNames = { claude: 'Claude', openai: 'OpenAI', groq: 'Groq' };
+  var llmModels = { claude: 'claude-sonnet-4-6', openai: 'gpt-4o', groq: 'llama-3.1-70b' };
+  document.getElementById('sum-llm').textContent = llmNames[config.llm_primary] || config.llm_primary;
+  document.getElementById('sum-llm-detail').textContent = llmModels[config.llm_primary] || '';
+
+  var enabledCount = Object.values(config.agents).filter(function(v) { return v; }).length;
+  document.getElementById('sum-agents').textContent = enabledCount + ' / 4 enabled';
+  var names = [];
+  if (config.agents.strategy) names.push('Strategy');
+  if (config.agents.risk) names.push('Risk');
+  if (config.agents.execution) names.push('Execution');
+  if (config.agents.research) names.push('Research');
+  document.getElementById('sum-agents-detail').textContent = names.join(', ');
+
+  // Live warning
+  document.getElementById('sum-live-warning').style.display = config.mode === 'live' ? 'block' : 'none';
+}
+
+// ─── Launch ──────────────────────────────────────────────
+function launchApp() {
+  updateConfig();
+  var configJson = JSON.stringify(config);
+
+  if (pyBridge && pyBridge.wizard_done) {
+    pyBridge.wizard_done(configJson);
+  } else {
+    console.log('Wizard config:', configJson);
+    alert('TradeOS India launching! (Demo mode)\n\nConfig: ' + config.mode + ' mode, ' + config.markets.length + ' markets');
+  }
+}
+</script>
+</body>
+</html>
