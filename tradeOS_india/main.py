@@ -5,7 +5,6 @@ Initializes PySide6 app, applies theme, checks first-run state,
 wires up all screens into the main window, and starts the event loop.
 """
 
-import asyncio
 import sys
 import os
 
@@ -41,11 +40,8 @@ class TradeOSApp:
         # Apply theme
         apply_theme(self._state.theme)
 
-        # Main window
+        # Main window (HTML shell — no screen wiring needed)
         self._window = MainWindow()
-
-        # Wire screens
-        self._wire_screens()
 
         # Connect lifecycle signals
         self._event_bus.wizard_completed.connect(self._on_wizard_completed)
@@ -54,33 +50,6 @@ class TradeOSApp:
         log.info(f"TradeOS India v{self._settings.app_version} initialized")
         log.info(f"Mode: {self._state.mode} | Broker: {self._state.broker_name} "
                  f"| LLM: {self._state.llm_primary}")
-
-    def _wire_screens(self) -> None:
-        """Replace placeholder editor pages with real screen widgets."""
-        from ui.screens.dashboard import DashboardScreen
-        from ui.screens.strategy_builder import StrategyBuilderScreen
-        from ui.screens.backtest_screen import BacktestScreen
-        from ui.screens.agent_monitor import AgentMonitorScreen
-
-        # Tab 0: Live Monitor (Dashboard)
-        self._dashboard = DashboardScreen()
-        self._window.replace_editor_page(0, self._dashboard)
-
-        # Tab 1: Strategy Builder
-        self._strategy_builder = StrategyBuilderScreen()
-        self._window.replace_editor_page(1, self._strategy_builder)
-
-        # Tab 2: Backtest
-        self._backtest = BacktestScreen()
-        self._window.replace_editor_page(2, self._backtest)
-
-        # Tab 3: Agent Log
-        self._agent_monitor = AgentMonitorScreen()
-        self._window.replace_editor_page(3, self._agent_monitor)
-
-        # Tab 4: Terminal stays as placeholder (built-in bottom panel terminal)
-
-        log.info("All screens wired into main window")
 
     def _check_first_run(self) -> None:
         """If no state file exists, show the setup wizard as a dialog."""

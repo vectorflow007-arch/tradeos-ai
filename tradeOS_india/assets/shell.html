@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeOS India</title>
+<style>
+:root {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --bg-titlebar: #1a1d23;
+  --bg-hover: #383838;
+  --accent: #007acc;
+  --accent-hover: #1a8ad4;
+  --text-primary: #cccccc;
+  --text-secondary: #858585;
+  --text-bright: #e0e0e0;
+  --border: #3e3e42;
+  --success: #4ec9b0;
+  --warning: #d7ba7d;
+  --error: #f44747;
+  --radius: 4px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ─── Activity Bar ─────────────────────────────────────── */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+
+.activity-bar {
+  width: 48px;
+  min-width: 48px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.activity-bar .ab-icon {
+  width: 48px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  opacity: 0.55;
+  transition: 0.15s;
+  position: relative;
+}
+
+.activity-bar .ab-icon:hover { opacity: 0.85; background: rgba(255,255,255,0.04); }
+.activity-bar .ab-icon.active {
+  opacity: 1;
+  border-left-color: var(--accent);
+  background: rgba(255,255,255,0.06);
+}
+
+.activity-bar .ab-icon svg { width: 22px; height: 22px; }
+.activity-bar .ab-icon svg path,
+.activity-bar .ab-icon svg rect,
+.activity-bar .ab-icon svg circle,
+.activity-bar .ab-icon svg line,
+.activity-bar .ab-icon svg polyline {
+  stroke: var(--text-bright);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.activity-bar .ab-spacer { flex: 1; }
+
+/* ─── Sidebar ──────────────────────────────────────────── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s, min-width 0.2s;
+}
+.sidebar.collapsed { width: 0; min-width: 0; border: none; }
+
+.sidebar-header {
+  padding: 10px 14px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 10px;
+}
+
+.sb-item {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1px;
+}
+.sb-item:hover { background: rgba(255,255,255,0.05); }
+.sb-item.active { background: rgba(0,122,204,0.15); color: var(--text-bright); }
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; }
+.sb-dot.green { background: var(--success); }
+.sb-dot.yellow { background: var(--warning); }
+.sb-dot.red { background: var(--error); }
+.sb-dot.blue { background: var(--accent); }
+
+/* ─── Main Panel ───────────────────────────────────────── */
+.main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: var(--bg-tertiary);
+  min-height: 35px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-item {
+  padding: 0 16px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-top: 2px solid transparent;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+.tab-item:hover { color: var(--text-primary); }
+.tab-item.active {
+  color: var(--text-bright);
+  background: var(--bg-primary);
+  border-top-color: var(--accent);
+}
+
+/* ─── Editor content ───────────────────────────────────── */
+.editor-area { flex: 1; position: relative; overflow: hidden; }
+.screen-panel { display: none; position: absolute; inset: 0; overflow-y: auto; }
+.screen-panel.active { display: flex; flex-direction: column; }
+
+/* ─── Live Monitor Screen ──────────────────────────────── */
+.monitor-topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.monitor-topbar .app-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.monitor-topbar .app-title .logo {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+}
+
+.pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pill.green { background: rgba(78,201,176,0.15); color: var(--success); }
+.pill.blue { background: rgba(0,122,204,0.15); color: var(--accent); }
+.pill.yellow { background: rgba(215,186,125,0.15); color: var(--warning); }
+.pill.red { background: rgba(244,71,71,0.15); color: var(--error); }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-right .clock {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+
+.btn-sm {
+  padding: 5px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: 0.15s;
+}
+.btn-sm:hover { border-color: var(--text-secondary); }
+.btn-sm.danger { border-color: var(--error); color: var(--error); }
+.btn-sm.danger:hover { background: var(--error); color: #fff; }
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.stat-card .stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.stat-card .stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+.stat-card .stat-value.green { color: var(--success); }
+.stat-card .stat-value.red { color: var(--error); }
+
+/* Agent cards */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 16px 12px;
+}
+
+.agent-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  border-left: 3px solid;
+}
+.agent-card .ac-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.agent-card .ac-name { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+.agent-card .ac-status {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(78,201,176,0.15);
+  color: var(--success);
+  text-transform: uppercase;
+}
+.agent-card .ac-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+.agent-card .ac-meta { font-size: 10px; color: var(--text-secondary); margin-top: 6px; display: flex; gap: 12px; }
+
+/* Activity log */
+.monitor-body { display: flex; flex: 1; overflow: hidden; }
+.monitor-left { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+.monitor-right { width: 320px; display: flex; flex-direction: column; overflow: hidden; }
+
+.section-header {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 10px 16px 6px;
+}
+
+.activity-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+.log-entry { display: flex; gap: 8px; }
+.log-entry .time { color: var(--text-secondary); flex-shrink: 0; }
+.log-entry .agent { font-weight: 600; flex-shrink: 0; }
+.log-entry .agent.strategy { color: #569cd6; }
+.log-entry .agent.risk { color: #dcdcaa; }
+.log-entry .agent.execution { color: var(--success); }
+.log-entry .agent.research { color: #c586c0; }
+.log-entry .msg { color: var(--text-primary); }
+
+/* Risk panel */
+.risk-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+.risk-gauge {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(var(--success) 0deg, var(--success) var(--gauge-deg, 0deg), var(--bg-tertiary) var(--gauge-deg, 0deg), var(--bg-tertiary) 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.risk-gauge::after {
+  content: '';
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  position: absolute;
+}
+.risk-gauge .gauge-text {
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.risk-gauge-label { font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
+
+.risk-entries { flex: 1; overflow-y: auto; padding: 4px 12px; }
+.risk-entry { font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; }
+.risk-entry .re-time { color: var(--text-secondary); font-family: monospace; }
+.risk-entry .re-msg { color: var(--text-primary); }
+
+/* ─── Strategy Builder Screen ──────────────────────────── */
+.strategy-screen { padding: 0; display: flex; flex-direction: column; }
+.strategy-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.strategy-toolbar select {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.strategy-toolbar label { font-size: 12px; color: var(--text-secondary); }
+.strategy-toolbar .btn-run {
+  padding: 5px 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--success);
+  color: #1e1e1e;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+.strategy-toolbar .btn-run:hover { background: #5bd4bc; }
+
+.strategy-body { display: flex; flex: 1; overflow: hidden; }
+.strategy-editor {
+  flex: 1;
+  padding: 16px;
+  background: var(--bg-primary);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  border: none;
+  outline: none;
+  resize: none;
+  line-height: 1.6;
+}
+.strategy-preview {
+  width: 380px;
+  background: #1a1d23;
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-y: auto;
+}
+
+/* ─── Backtest Screen ──────────────────────────────────── */
+.backtest-metrics {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+.bt-metric {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
+.bt-metric .bt-label { font-size: 10px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.4px; margin-bottom: 6px; }
+.bt-metric .bt-value { font-size: 18px; font-weight: 700; color: var(--text-bright); }
+.bt-metric .bt-value.green { color: var(--success); }
+
+.bt-chart-area {
+  flex: 1;
+  margin: 0 16px 12px;
+  background: #1a1d23;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* ─── Agent Log Screen ─────────────────────────────────── */
+.agent-log-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px;
+}
+
+.al-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  border-left: 3px solid;
+}
+.al-card .al-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.al-card .al-name { font-weight: 600; font-size: 14px; }
+.al-card .al-badge {
+  font-size: 9px; font-weight: 700; padding: 2px 8px;
+  border-radius: 3px; text-transform: uppercase;
+}
+.al-card .al-stats { font-size: 11px; color: var(--text-secondary); display: flex; gap: 14px; margin-top: 6px; }
+
+.agent-log-feed {
+  flex: 1;
+  margin: 0 16px 16px;
+  background: #1a1d23;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-y: auto;
+  padding: 10px 14px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+/* ─── Bottom Panel ─────────────────────────────────────── */
+.bottom-panel {
+  border-top: 1px solid var(--border);
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+.bp-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+.bp-tab {
+  padding: 5px 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  font-weight: 600;
+}
+.bp-tab:hover { color: var(--text-primary); }
+.bp-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+.bp-content {
+  flex: 1;
+  padding: 8px 14px;
+  overflow-y: auto;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ─── Status Bar ───────────────────────────────────────── */
+.status-bar {
+  height: 24px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 11px;
+  color: #fff;
+  gap: 0;
+}
+.status-bar .sb-item { padding: 0 10px; white-space: nowrap; }
+.status-bar .sb-sep { width: 1px; height: 14px; background: rgba(255,255,255,0.3); }
+.status-bar .sb-spacer { flex: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+</style>
+</head>
+<body>
+
+<!-- ═══ App Body ══════════════════════════════════════════ -->
+<div class="app-body">
+
+  <!-- Activity Bar -->
+  <div class="activity-bar">
+    <div class="ab-icon active" data-tab="0" title="Live Monitor">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+    </div>
+    <div class="ab-icon" data-tab="1" title="Strategy Builder">
+      <svg viewBox="0 0 24 24"><polyline points="3,18 7,8 12,14 17,4 21,10"/></svg>
+    </div>
+    <div class="ab-icon" data-tab="2" title="Backtest">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="4" x2="4" y2="20"/><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="14" width="3" height="6" rx="0.5" fill="currentColor" style="fill:var(--text-bright);stroke:none;opacity:0.6"/><rect x="10.5" y="8" width="3" height="12" rx="0.5" fill="currentColor" style="fill:var(--text-bright);stroke:none;opacity:0.6"/><rect x="15" y="11" width="3" height="9" rx="0.5" fill="currentColor" style="fill:var(--text-bright);stroke:none;opacity:0.6"/></svg>
+    </div>
+    <div class="ab-icon" data-tab="3" title="Agent Log">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5,21 C5.5,16.5 8,14 12,14 C16,14 18.5,16.5 18.5,21"/></svg>
+    </div>
+    <div class="ab-icon" data-tab="4" title="Risk">
+      <svg viewBox="0 0 24 24"><path d="M12,3 L3,10 L3,17 C3,20 7,22 12,23 C17,22 21,20 21,17 L21,10 Z"/><line x1="12" y1="9" x2="12" y2="15"/><circle cx="12" cy="17.5" r="0.5" style="fill:var(--text-bright)"/></svg>
+    </div>
+    <div class="ab-spacer"></div>
+    <div class="ab-icon" data-tab="5" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12,1 L14,4.5 L17.5,3.5 L17,7.5 L21,9 L19,12 L21,15 L17,16.5 L17.5,20.5 L14,19.5 L12,23 L10,19.5 L6.5,20.5 L7,16.5 L3,15 L5,12 L3,9 L7,7.5 L6.5,3.5 L10,4.5 Z"/></svg>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header" id="sidebarTitle">EXPLORER</div>
+    <div class="sidebar-content" id="sidebarContent">
+      <div class="sb-item active"><span class="sb-dot green"></span> Live Monitor</div>
+      <div class="sb-item"><span class="sb-dot blue"></span> Strategy Builder</div>
+      <div class="sb-item"><span class="sb-dot blue"></span> Backtest Lab</div>
+      <div class="sb-item"><span class="sb-dot yellow"></span> Agent Monitor</div>
+      <div class="sb-item"><span class="sb-dot red"></span> Risk Dashboard</div>
+      <div style="margin-top: 14px;"></div>
+      <div class="sidebar-header" style="padding-left:0;">WATCHLIST</div>
+      <div class="sb-item">NIFTY 50 <span style="margin-left:auto;color:var(--success);font-size:11px;font-family:monospace">22,456.30</span></div>
+      <div class="sb-item">BANK NIFTY <span style="margin-left:auto;color:var(--error);font-size:11px;font-family:monospace">47,123.85</span></div>
+      <div class="sb-item">RELIANCE <span style="margin-left:auto;color:var(--success);font-size:11px;font-family:monospace">2,891.40</span></div>
+      <div class="sb-item">TCS <span style="margin-left:auto;color:var(--text-secondary);font-size:11px;font-family:monospace">3,456.10</span></div>
+      <div class="sb-item">HDFCBANK <span style="margin-left:auto;color:var(--success);font-size:11px;font-family:monospace">1,678.55</span></div>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div class="main-panel">
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <div class="tab-item active" data-tab="0">Live Monitor</div>
+      <div class="tab-item" data-tab="1">Strategy Builder</div>
+      <div class="tab-item" data-tab="2">Backtest</div>
+      <div class="tab-item" data-tab="3">Agent Log</div>
+      <div class="tab-item" data-tab="4">Risk Monitor</div>
+    </div>
+
+    <!-- Editor Area -->
+    <div class="editor-area">
+
+      <!-- Screen 0: Live Monitor -->
+      <div class="screen-panel active" id="screen-0">
+        <div class="monitor-topbar">
+          <div class="app-title">
+            <div class="logo">T</div>
+            TradeOS India
+          </div>
+          <span class="pill green" id="pillMarket">NSE Open</span>
+          <span class="pill blue" id="pillBroker">Fyers</span>
+          <span class="pill green" id="pillAgents">Agents: 4/4</span>
+          <span class="pill yellow" id="pillMode">Paper</span>
+          <div class="topbar-right">
+            <span class="clock" id="topClock">00:00:00 IST</span>
+            <button class="btn-sm" id="btnPause">Pause</button>
+            <button class="btn-sm danger" id="btnKill">Kill Switch</button>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Today's P&L</div><div class="stat-value green" id="statPnl">+2,450</div></div>
+          <div class="stat-card"><div class="stat-label">Total Trades</div><div class="stat-value" id="statTrades">12</div></div>
+          <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="statWinRate">66.7%</div></div>
+          <div class="stat-card"><div class="stat-label">LLM Tokens</div><div class="stat-value" id="statTokens">8,234</div></div>
+        </div>
+
+        <div class="agents-grid">
+          <div class="agent-card" style="border-left-color:#569cd6;">
+            <div class="ac-header"><span class="ac-name">Strategy</span><span class="ac-status">Running</span></div>
+            <div class="ac-desc">Generating BUY/SELL signals via LLM analysis</div>
+            <div class="ac-meta"><span>Tasks: 24</span><span>Tokens: 3.2K</span></div>
+          </div>
+          <div class="agent-card" style="border-left-color:#dcdcaa;">
+            <div class="ac-header"><span class="ac-name">Risk</span><span class="ac-status">Running</span></div>
+            <div class="ac-desc">Validating trades against risk rules</div>
+            <div class="ac-meta"><span>Tasks: 18</span><span>Blocked: 3</span></div>
+          </div>
+          <div class="agent-card" style="border-left-color:#4ec9b0;">
+            <div class="ac-header"><span class="ac-name">Execution</span><span class="ac-status">Running</span></div>
+            <div class="ac-desc">Managing order placement and fills</div>
+            <div class="ac-meta"><span>Orders: 12</span><span>Filled: 10</span></div>
+          </div>
+          <div class="agent-card" style="border-left-color:#c586c0;">
+            <div class="ac-header"><span class="ac-name">Research</span><span class="ac-status">Idle</span></div>
+            <div class="ac-desc">Backtest analysis and insights</div>
+            <div class="ac-meta"><span>Tasks: 2</span><span>Cost: 0.4</span></div>
+          </div>
+        </div>
+
+        <div class="monitor-body">
+          <div class="monitor-left">
+            <div class="section-header">Activity Log</div>
+            <div class="activity-log" id="activityLog"></div>
+          </div>
+          <div class="monitor-right">
+            <div class="section-header">Risk Gauge</div>
+            <div class="risk-gauge-wrap">
+              <div class="risk-gauge" id="riskGauge" style="--gauge-deg:115deg;">
+                <span class="gauge-text">32%</span>
+              </div>
+              <div class="risk-gauge-label">of daily loss limit used</div>
+            </div>
+            <div class="section-header">Circuit Breaker Log</div>
+            <div class="risk-entries" id="riskLog">
+              <div class="risk-entry"><span class="re-time">09:15</span><span class="re-msg">System initialized, limit: INR 5,000</span></div>
+              <div class="risk-entry"><span class="re-time">09:32</span><span class="re-msg">Loss at 12% of limit</span></div>
+              <div class="risk-entry"><span class="re-time">10:15</span><span class="re-msg">Loss at 32% of limit</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 1: Strategy Builder -->
+      <div class="screen-panel" id="screen-1">
+        <div class="strategy-toolbar">
+          <label>Strategy:</label>
+          <select><option>NIFTY Momentum</option><option>Bank NIFTY Scalp</option><option>Custom...</option></select>
+          <label>TF:</label>
+          <select><option>1m</option><option selected>5m</option><option>15m</option><option>1h</option></select>
+          <div style="flex:1;"></div>
+          <button class="btn-sm">Validate</button>
+          <button class="strategy-toolbar .btn-run" style="padding:5px 16px;border:none;border-radius:4px;background:var(--success);color:#1e1e1e;font-weight:600;font-size:12px;cursor:pointer;">Run Strategy</button>
+        </div>
+        <div class="strategy-body">
+          <textarea class="strategy-editor"># TradeOS Strategy Template
+# -----------------------------------------
+# Describe your trading logic below.
+
+strategy_name: "NIFTY Momentum"
+timeframe: 5m
+symbols: ["NSE:NIFTY50-INDEX"]
+
+entry_rules:
+  - RSI(14) crosses above 30 (oversold reversal)
+  - Price above VWAP
+  - Volume > 1.5x 20-period average
+
+exit_rules:
+  - RSI(14) crosses below 70
+  - Trailing stop-loss: 0.5%
+  - Max holding time: 45 minutes
+
+risk:
+  position_size: 1% of capital
+  stop_loss: 0.8%
+  target: 1.5%</textarea>
+          <div class="strategy-preview">
+            Signal Preview
+            ─────────────────────────
+
+            Write or edit your strategy on the left,
+            then click 'Validate' to check syntax
+            or 'Run Strategy' to start signal generation.
+
+            The Strategy Agent will interpret your rules
+            and output signals here in real-time.
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: Backtest -->
+      <div class="screen-panel" id="screen-2">
+        <div class="backtest-metrics">
+          <div class="bt-metric"><div class="bt-label">Total Return</div><div class="bt-value green">+12.4%</div></div>
+          <div class="bt-metric"><div class="bt-label">Win Rate</div><div class="bt-value">58.3%</div></div>
+          <div class="bt-metric"><div class="bt-label">Sharpe Ratio</div><div class="bt-value">1.42</div></div>
+          <div class="bt-metric"><div class="bt-label">Max Drawdown</div><div class="bt-value" style="color:var(--error);">-4.8%</div></div>
+          <div class="bt-metric"><div class="bt-label">Total Trades</div><div class="bt-value">127</div></div>
+          <div class="bt-metric"><div class="bt-label">Profit Factor</div><div class="bt-value green">1.68</div></div>
+        </div>
+        <div class="bt-chart-area">Equity curve will render here after running backtest</div>
+      </div>
+
+      <!-- Screen 3: Agent Log -->
+      <div class="screen-panel" id="screen-3">
+        <div class="agent-log-grid">
+          <div class="al-card" style="border-left-color:#569cd6;">
+            <div class="al-header"><span class="al-name" style="color:#569cd6;">Strategy Agent</span><span class="al-badge" style="background:rgba(78,201,176,0.15);color:var(--success);">Running</span></div>
+            <div class="al-stats"><span>Tasks: 24</span><span>Tokens: 3,241</span><span>Cost: INR 2.90</span></div>
+          </div>
+          <div class="al-card" style="border-left-color:#dcdcaa;">
+            <div class="al-header"><span class="al-name" style="color:#dcdcaa;">Risk Agent</span><span class="al-badge" style="background:rgba(78,201,176,0.15);color:var(--success);">Running</span></div>
+            <div class="al-stats"><span>Tasks: 18</span><span>Tokens: 1,890</span><span>Cost: INR 1.70</span></div>
+          </div>
+          <div class="al-card" style="border-left-color:#4ec9b0;">
+            <div class="al-header"><span class="al-name" style="color:#4ec9b0;">Execution Agent</span><span class="al-badge" style="background:rgba(78,201,176,0.15);color:var(--success);">Running</span></div>
+            <div class="al-stats"><span>Orders: 12</span><span>Filled: 10</span><span>Rejected: 2</span></div>
+          </div>
+          <div class="al-card" style="border-left-color:#c586c0;">
+            <div class="al-header"><span class="al-name" style="color:#c586c0;">Research Agent</span><span class="al-badge" style="background:rgba(215,186,125,0.15);color:var(--warning);">Idle</span></div>
+            <div class="al-stats"><span>Tasks: 2</span><span>Tokens: 456</span><span>Cost: INR 0.40</span></div>
+          </div>
+        </div>
+        <div class="section-header">LIVE AGENT LOG</div>
+        <div class="agent-log-feed" id="agentLogFeed"></div>
+      </div>
+
+      <!-- Screen 4: Risk Monitor -->
+      <div class="screen-panel" id="screen-4">
+        <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-card"><div class="stat-label">Daily P&L</div><div class="stat-value green">+1,600</div></div>
+          <div class="stat-card"><div class="stat-label">Daily Limit</div><div class="stat-value">5,000</div></div>
+          <div class="stat-card"><div class="stat-label">Open Positions</div><div class="stat-value">3 / 10</div></div>
+          <div class="stat-card"><div class="stat-label">Total Exposure</div><div class="stat-value">74,500</div></div>
+          <div class="stat-card"><div class="stat-label">Max Drawdown</div><div class="stat-value" style="color:var(--error);">-2.1%</div></div>
+          <div class="stat-card"><div class="stat-label">Circuit Breaker</div><div class="stat-value green">OFF</div></div>
+        </div>
+        <div class="monitor-body" style="flex:1;">
+          <div class="monitor-left">
+            <div class="section-header">RISK EVENT LOG</div>
+            <div class="activity-log" id="riskEventLog"></div>
+          </div>
+          <div class="monitor-right">
+            <div class="section-header">LOSS GAUGE</div>
+            <div class="risk-gauge-wrap">
+              <div class="risk-gauge" style="--gauge-deg:115deg;"><span class="gauge-text">32%</span></div>
+              <div class="risk-gauge-label">of daily loss limit used</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /editor-area -->
+
+    <!-- Bottom Panel -->
+    <div class="bottom-panel">
+      <div class="bp-tabs">
+        <div class="bp-tab active" data-bp="terminal">Terminal</div>
+        <div class="bp-tab" data-bp="problems">Problems</div>
+        <div class="bp-tab" data-bp="output">Output</div>
+        <div class="bp-tab" data-bp="agentfeed">Agent Feed</div>
+      </div>
+      <div class="bp-content" id="bpContent">
+<span style="color:var(--success);">TradeOS India v1.0.0</span>
+<span style="color:var(--text-secondary);">Paper mode | Fyers broker | Claude LLM</span>
+<span style="color:var(--text-secondary);">[09:15:00] System initialized successfully</span>
+<span style="color:var(--text-secondary);">[09:15:01] Agents started: Strategy, Risk, Execution, Research</span>
+<span style="color:var(--text-secondary);">[09:15:02] WebSocket feed connected</span>
+      </div>
+    </div>
+
+  </div><!-- /main-panel -->
+</div><!-- /app-body -->
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <span class="sb-item" id="sbMode">PAPER</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item" id="sbBroker">Fyers: Disconnected</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item">&#10005; 0 errors</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item">&#9888; 0 warnings</span>
+  <span class="sb-spacer"></span>
+  <span class="sb-item" id="sbLlm">Claude</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item" id="sbClock">00:00:00 IST</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item" id="sbMarket">NSE Closed</span>
+  <span class="sb-sep"></span>
+  <span class="sb-item">Python 3.12</span>
+</div>
+
+<script>
+// ─── Tab / Screen switching ──────────────────────────────
+var tabs = document.querySelectorAll('.tab-item');
+var abIcons = document.querySelectorAll('.ab-icon[data-tab]');
+var screens = document.querySelectorAll('.screen-panel');
+
+function switchTab(idx) {
+  if (idx > 4) return; // settings handled separately
+  tabs.forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  screens.forEach(function(s, i) { s.classList.toggle('active', i === idx); });
+  abIcons.forEach(function(a) {
+    var ai = parseInt(a.getAttribute('data-tab'));
+    a.classList.toggle('active', ai === idx);
+  });
+}
+
+tabs.forEach(function(t) {
+  t.addEventListener('click', function() { switchTab(parseInt(t.getAttribute('data-tab'))); });
+});
+
+abIcons.forEach(function(a) {
+  a.addEventListener('click', function() {
+    var idx = parseInt(a.getAttribute('data-tab'));
+    if (idx <= 4) switchTab(idx);
+    else if (idx === 5 && window.pyBridge && window.pyBridge.open_settings) {
+      window.pyBridge.open_settings();
+    }
+  });
+});
+
+// Bottom panel tabs
+document.querySelectorAll('.bp-tab').forEach(function(t) {
+  t.addEventListener('click', function() {
+    document.querySelectorAll('.bp-tab').forEach(function(x) { x.classList.remove('active'); });
+    t.classList.add('active');
+  });
+});
+
+// ─── Clock ───────────────────────────────────────────────
+function updateClock() {
+  var now = new Date();
+  // IST = UTC + 5:30
+  var ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60 * 1000));
+  var h = String(ist.getHours()).padStart(2, '0');
+  var m = String(ist.getMinutes()).padStart(2, '0');
+  var s = String(ist.getSeconds()).padStart(2, '0');
+  var t = h + ':' + m + ':' + s;
+  document.getElementById('topClock').textContent = t + ' IST';
+  document.getElementById('sbClock').textContent = t + ' IST';
+
+  var hr = ist.getHours();
+  var mn = ist.getMinutes();
+  var mins = hr * 60 + mn;
+  var isOpen = mins >= 555 && mins <= 930 && ist.getDay() > 0 && ist.getDay() < 6;
+  document.getElementById('sbMarket').textContent = isOpen ? 'NSE Open' : 'NSE Closed';
+  document.getElementById('pillMarket').textContent = isOpen ? 'NSE Open' : 'NSE Closed';
+  document.getElementById('pillMarket').className = 'pill ' + (isOpen ? 'green' : 'yellow');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Simulation: Activity Log ────────────────────────────
+var logMessages = [
+  { agent: 'strategy', msg: 'Analyzing NIFTY50 5m candles, RSI=42.3' },
+  { agent: 'strategy', msg: 'Signal: BUY NIFTY 22450 CE, confidence 78%' },
+  { agent: 'risk', msg: 'Validating order: position size within limits' },
+  { agent: 'risk', msg: 'Pre-check passed: daily loss at 32%, max 80%' },
+  { agent: 'execution', msg: 'Paper order placed: BUY 1x NIFTY 22450 CE @ 185.50' },
+  { agent: 'execution', msg: 'Order filled: slippage 0.01% (simulated)' },
+  { agent: 'strategy', msg: 'BANKNIFTY showing bearish divergence on 15m' },
+  { agent: 'research', msg: 'Backtest complete: NIFTY momentum +12.4% (127 trades)' },
+  { agent: 'risk', msg: 'Position exposure: INR 74,500 / 2,00,000 limit' },
+  { agent: 'strategy', msg: 'RELIANCE forming cup-and-handle on 1h chart' },
+  { agent: 'execution', msg: 'SL triggered: SELL NIFTY 22450 CE @ 178.20, P&L: -7.30' },
+  { agent: 'risk', msg: 'Daily loss updated: INR 1,607 (32.1% of limit)' },
+  { agent: 'strategy', msg: 'Signal: HOLD - no clear setup on HDFCBANK' },
+  { agent: 'execution', msg: 'Paper order placed: BUY 1x RELIANCE @ 2891.40' },
+  { agent: 'research', msg: 'Monte Carlo: 95% CI return range [+8.2%, +16.1%]' },
+];
+var logIdx = 0;
+
+function addLogEntry() {
+  var entry = logMessages[logIdx % logMessages.length];
+  logIdx++;
+  var now = new Date();
+  var ist = new Date(now.getTime() + (5.5*60*60*1000) + (now.getTimezoneOffset()*60*1000));
+  var time = String(ist.getHours()).padStart(2,'0') + ':' + String(ist.getMinutes()).padStart(2,'0') + ':' + String(ist.getSeconds()).padStart(2,'0');
+
+  var el = document.createElement('div');
+  el.className = 'log-entry';
+  el.innerHTML = '<span class="time">' + time + '</span><span class="agent ' + entry.agent + '">[' + entry.agent.toUpperCase() + ']</span><span class="msg">' + entry.msg + '</span>';
+
+  var log = document.getElementById('activityLog');
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+
+  // Also add to agent log feed
+  var feed = document.getElementById('agentLogFeed');
+  if (feed) {
+    var el2 = el.cloneNode(true);
+    feed.appendChild(el2);
+    feed.scrollTop = feed.scrollHeight;
+  }
+  // Risk event log
+  var riskLog = document.getElementById('riskEventLog');
+  if (riskLog && entry.agent === 'risk') {
+    var el3 = el.cloneNode(true);
+    riskLog.appendChild(el3);
+    riskLog.scrollTop = riskLog.scrollHeight;
+  }
+}
+
+// Start simulation
+setInterval(addLogEntry, 2500);
+addLogEntry();
+addLogEntry();
+addLogEntry();
+
+// ─── QWebChannel Bridge ─────────────────────────────────
+var pyBridge = null;
+function initBridge() {
+  if (typeof QWebChannel !== 'undefined') {
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+      pyBridge = channel.objects.shellBridge;
+    });
+  }
+}
+</script>
+</body>
+</html>

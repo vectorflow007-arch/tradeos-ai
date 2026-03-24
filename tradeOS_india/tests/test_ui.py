@@ -49,40 +49,29 @@ class TestMainWindow:
         w.close()
         w.deleteLater()
 
-    def test_activity_bar(self, qapp):
-        from ui.main_window import ActivityBar
-        ab = ActivityBar()
-        assert ab.active_index == 0
-        ab.deleteLater()
+    def test_shell_bridge(self, qapp):
+        from ui.main_window import ShellBridge
+        bridge = ShellBridge()
+        state_json = bridge.get_state()
+        import json
+        state = json.loads(state_json)
+        assert "mode" in state
+        assert "broker_name" in state
+        bridge.deleteLater()
 
-    def test_sidebar(self, qapp):
-        from ui.main_window import Sidebar
-        sb = Sidebar()
-        sb.set_panel(0)
-        sb.set_panel(3)
-        sb.deleteLater()
+    def test_settings_bridge(self, qapp):
+        from ui.main_window import SettingsBridge
+        bridge = SettingsBridge()
+        bridge.resetTokens()
+        bridge.deleteLater()
 
-    def test_status_bar(self, qapp):
-        from ui.main_window import StatusBar
-        sb = StatusBar()
-        sb.set_status("ok")
-        sb.set_status("warning")
-        sb.set_status("error")
-        sb.deleteLater()
-
-    def test_toggle_sidebar(self, qapp):
+    def test_toggle_settings(self, qapp):
         from ui.main_window import MainWindow
         w = MainWindow()
-        w.toggle_sidebar()
-        w.toggle_sidebar()
-        w.close()
-        w.deleteLater()
-
-    def test_toggle_bottom_panel(self, qapp):
-        from ui.main_window import MainWindow
-        w = MainWindow()
-        w.toggle_bottom_panel()
-        w.toggle_bottom_panel()
+        w.toggle_settings()
+        assert w._settings_visible is True
+        w.toggle_settings()
+        assert w._settings_visible is False
         w.close()
         w.deleteLater()
 
@@ -91,15 +80,6 @@ class TestMainWindow:
         w = MainWindow()
         w.set_theme("light")
         w.set_theme("dark")
-        w.close()
-        w.deleteLater()
-
-    def test_replace_editor_page(self, qapp):
-        from ui.main_window import MainWindow
-        from PySide6.QtWidgets import QLabel
-        w = MainWindow()
-        label = QLabel("Test")
-        w.replace_editor_page(4, label)  # Replace Terminal tab
         w.close()
         w.deleteLater()
 
