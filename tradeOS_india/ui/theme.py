@@ -21,7 +21,14 @@ COLORS_DARK = {
     "bg_tertiary": "#2d2d30",
     "bg_input": "#3c3c3c",
     "bg_hover": "#383838",
-    "bg_titlebar": "#1a1d23",
+    "bg_titlebar": "#1e1e1e",
+    "bg_titlebar_end": "#1e1e1e",
+    "titlebar_text": "#c9d1d9",
+    "titlebar_subtitle": "#484f58",
+    "titlebar_dot": "#30363d",
+    "titlebar_btn_hover": "#30363d",
+    "titlebar_close_hover": "#da3633",
+    "titlebar_icon_color": "#8b949e",
     "bg_statusbar": "#007acc",
     "bg_statusbar_warn": "#d7ba7d",
     "bg_statusbar_error": "#f44747",
@@ -47,7 +54,14 @@ COLORS_LIGHT = {
     "bg_tertiary": "#e8e8e8",
     "bg_input": "#ffffff",
     "bg_hover": "#e8e8e8",
-    "bg_titlebar": "#dddddd",
+    "bg_titlebar": "#1e1e1e",
+    "bg_titlebar_end": "#1e1e1e",
+    "titlebar_text": "#cccccc",
+    "titlebar_subtitle": "#666666",
+    "titlebar_dot": "#555555",
+    "titlebar_btn_hover": "#3e3e3e",
+    "titlebar_close_hover": "#e81123",
+    "titlebar_icon_color": "#999999",
     "bg_statusbar": "#007acc",
     "bg_statusbar_warn": "#d7ba7d",
     "bg_statusbar_error": "#f44747",
@@ -96,34 +110,78 @@ QMainWindow {{
 
 /* ─── Title Bar ───────────────────────────────────────────── */
 #TitleBar {{
-    background-color: {c['bg_titlebar']};
-    min-height: 32px;
-    max-height: 32px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {c['bg_titlebar']}, stop:1 {c['bg_titlebar_end']});
+    min-height: 38px;
+    max-height: 38px;
 }}
 
 #TitleBar QLabel {{
-    color: {c['text_primary']};
-    font-size: 12px;
     background: transparent;
+}}
+
+#TitleBar QLabel#titlebar_logo {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 {c['accent']}, stop:1 #0098ff);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 6px;
+    min-width: 24px;
+    max-width: 24px;
+    min-height: 24px;
+    max-height: 24px;
+}}
+
+#TitleBar QLabel#titlebar_title {{
+    color: {c['titlebar_text']};
+    font-size: 13px;
+    font-weight: 600;
+    padding-left: 8px;
+}}
+
+#TitleBar QLabel#titlebar_dot {{
+    color: {c['titlebar_dot']};
+    font-size: 16px;
+    padding: 0 8px;
+}}
+
+#TitleBar QLabel#titlebar_version {{
+    color: {c['titlebar_subtitle']};
+    font-size: 10px;
+    font-weight: 500;
 }}
 
 #TitleBar QPushButton {{
-    background: transparent;
+    background-color: transparent;
     border: none;
-    color: {c['text_primary']};
+    border-radius: 0px;
+    padding: 0px;
+    color: {c['titlebar_icon_color']};
     min-width: 46px;
     max-width: 46px;
-    min-height: 32px;
-    max-height: 32px;
-    font-size: 10px;
+    min-height: 38px;
+    max-height: 38px;
+    font-size: 14px;
+    font-weight: 400;
 }}
 
 #TitleBar QPushButton:hover {{
-    background-color: {c['bg_hover']};
+    background-color: {c['titlebar_btn_hover']};
+    color: {c['titlebar_text']};
 }}
 
-#TitleBar QPushButton#btn_close:hover {{
-    background-color: {c['error']};
+#TitleBar QPushButton:pressed {{
+    background-color: {c['titlebar_btn_hover']};
+}}
+
+#TitleBar #btn_close:hover {{
+    background-color: {c['titlebar_close_hover']};
+    color: #ffffff;
+}}
+
+#TitleBar #btn_close:pressed {{
+    background-color: {c['titlebar_close_hover']};
     color: #ffffff;
 }}
 

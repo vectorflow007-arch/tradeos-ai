@@ -86,15 +86,31 @@ body {
 /* ─── Sidebar ──────────────────────────────────────────── */
 .sidebar {
   width: 240px;
-  min-width: 240px;
+  min-width: 0;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.2s, min-width 0.2s;
+  position: relative;
 }
-.sidebar.collapsed { width: 0; min-width: 0; border: none; }
+.sidebar.collapsed { width: 0; border: none; }
+
+/* Sidebar resize handle */
+.sidebar-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+}
+.sidebar-resize:hover,
+.sidebar-resize.active {
+  background: var(--accent);
+}
 
 .sidebar-header {
   padding: 10px 14px 8px;
@@ -103,6 +119,29 @@ body {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Drawer toggle button */
+.drawer-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 3px;
+  padding: 0;
+}
+.drawer-toggle:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-bright);
 }
 
 .sidebar-content {
@@ -496,12 +535,42 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  position: relative;
 }
+.bottom-panel.collapsed {
+  height: 30px !important;
+  min-height: 30px;
+  overflow: hidden;
+}
+.bottom-panel.collapsed .bp-content { display: none; }
+.bottom-panel.collapsed .bp-resize { display: none; }
+.bottom-panel.maximized {
+  flex: 1;
+  height: auto !important;
+}
+
+/* Bottom panel resize handle */
+.bp-resize {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: row-resize;
+  z-index: 10;
+  background: transparent;
+}
+.bp-resize:hover,
+.bp-resize.active {
+  background: var(--accent);
+}
+
 .bp-tabs {
   display: flex;
   gap: 0;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
+  align-items: center;
 }
 .bp-tab {
   padding: 5px 14px;
@@ -514,6 +583,14 @@ body {
 }
 .bp-tab:hover { color: var(--text-primary); }
 .bp-tab.active { color: var(--text-bright); border-bottom-color: var(--accent); }
+
+.bp-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 8px;
+}
 
 .bp-content {
   flex: 1;
@@ -577,7 +654,11 @@ body {
 
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header" id="sidebarTitle">EXPLORER</div>
+    <div class="sidebar-header" id="sidebarTitle">
+      <span>EXPLORER</span>
+      <button class="drawer-toggle" id="sidebarCollapse" title="Collapse sidebar">&#x2013;</button>
+    </div>
+    <div class="sidebar-resize" id="sidebarResize"></div>
     <div class="sidebar-content" id="sidebarContent">
       <div class="sb-item active"><span class="sb-dot green"></span> Live Monitor</div>
       <div class="sb-item"><span class="sb-dot blue"></span> Strategy Builder</div>
@@ -793,12 +874,18 @@ risk:
     </div><!-- /editor-area -->
 
     <!-- Bottom Panel -->
-    <div class="bottom-panel">
+    <div class="bottom-panel" id="bottomPanel">
+      <div class="bp-resize" id="bpResize"></div>
       <div class="bp-tabs">
         <div class="bp-tab active" data-bp="terminal">Terminal</div>
         <div class="bp-tab" data-bp="problems">Problems</div>
         <div class="bp-tab" data-bp="output">Output</div>
         <div class="bp-tab" data-bp="agentfeed">Agent Feed</div>
+        <div class="bp-actions">
+          <button class="drawer-toggle" id="bpMinimize" title="Minimize panel">&#x2013;</button>
+          <button class="drawer-toggle" id="bpMaximize" title="Maximize panel">&#x25A1;</button>
+          <button class="drawer-toggle" id="bpClose" title="Close panel">&#x2715;</button>
+        </div>
       </div>
       <div class="bp-content" id="bpContent">
 <span style="color:var(--success);">TradeOS India v1.0.0</span>
@@ -814,6 +901,8 @@ risk:
 
 <!-- Status Bar -->
 <div class="status-bar">
+  <span class="sb-item" id="sbToggleTerminal" style="cursor:pointer;" title="Toggle Terminal">&#x2630; Terminal</span>
+  <span class="sb-sep"></span>
   <span class="sb-item" id="sbMode">PAPER</span>
   <span class="sb-sep"></span>
   <span class="sb-item" id="sbBroker">Fyers: Disconnected</span>
@@ -854,6 +943,11 @@ tabs.forEach(function(t) {
 abIcons.forEach(function(a) {
   a.addEventListener('click', function() {
     var idx = parseInt(a.getAttribute('data-tab'));
+    if (idx === 0) {
+      // Toggle sidebar on Explorer icon click
+      var sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+    }
     if (idx <= 4) switchTab(idx);
     else if (idx === 5 && window.pyBridge && window.pyBridge.open_settings) {
       window.pyBridge.open_settings();
@@ -861,11 +955,15 @@ abIcons.forEach(function(a) {
   });
 });
 
-// Bottom panel tabs
+// Bottom panel tabs — also reopen panel if collapsed
 document.querySelectorAll('.bp-tab').forEach(function(t) {
   t.addEventListener('click', function() {
     document.querySelectorAll('.bp-tab').forEach(function(x) { x.classList.remove('active'); });
     t.classList.add('active');
+    var bp = document.getElementById('bottomPanel');
+    if (bp.classList.contains('collapsed')) {
+      bp.classList.remove('collapsed');
+    }
   });
 });
 
@@ -948,6 +1046,115 @@ setInterval(addLogEntry, 2500);
 addLogEntry();
 addLogEntry();
 addLogEntry();
+
+// ─── Sidebar Resize ─────────────────────────────────────
+(function() {
+  var sidebar = document.getElementById('sidebar');
+  var handle = document.getElementById('sidebarResize');
+  var dragging = false;
+
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    dragging = true;
+    handle.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var abWidth = 48;
+    var newWidth = e.clientX - abWidth;
+    if (newWidth < 120) newWidth = 120;
+    if (newWidth > 500) newWidth = 500;
+    sidebar.style.width = newWidth + 'px';
+    sidebar.classList.remove('collapsed');
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      handle.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+})();
+
+// ─── Sidebar Collapse Toggle ────────────────────────────
+document.getElementById('sidebarCollapse').addEventListener('click', function() {
+  var sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+});
+
+// ─── Bottom Panel Resize ────────────────────────────────
+(function() {
+  var bp = document.getElementById('bottomPanel');
+  var handle = document.getElementById('bpResize');
+  var dragging = false;
+  var startY, startH;
+
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    dragging = true;
+    startY = e.clientY;
+    startH = bp.offsetHeight;
+    handle.classList.add('active');
+    bp.classList.remove('collapsed', 'maximized');
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var delta = startY - e.clientY;
+    var newH = startH + delta;
+    if (newH < 80) newH = 80;
+    if (newH > window.innerHeight * 0.7) newH = window.innerHeight * 0.7;
+    bp.style.height = newH + 'px';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      handle.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+})();
+
+// ─── Bottom Panel Min / Max / Close ─────────────────────
+document.getElementById('bpMinimize').addEventListener('click', function() {
+  var bp = document.getElementById('bottomPanel');
+  bp.classList.remove('maximized');
+  bp.classList.toggle('collapsed');
+});
+
+document.getElementById('bpMaximize').addEventListener('click', function() {
+  var bp = document.getElementById('bottomPanel');
+  bp.classList.remove('collapsed');
+  bp.classList.toggle('maximized');
+  if (bp.classList.contains('maximized')) {
+    bp.style.height = '';
+  }
+});
+
+document.getElementById('bpClose').addEventListener('click', function() {
+  var bp = document.getElementById('bottomPanel');
+  bp.classList.add('collapsed');
+  bp.classList.remove('maximized');
+});
+
+// Status bar terminal toggle
+document.getElementById('sbToggleTerminal').addEventListener('click', function() {
+  var bp = document.getElementById('bottomPanel');
+  bp.classList.toggle('collapsed');
+  bp.classList.remove('maximized');
+  if (!bp.classList.contains('collapsed')) {
+    bp.style.height = '';
+  }
+});
 
 // ─── QWebChannel Bridge ─────────────────────────────────
 var pyBridge = null;

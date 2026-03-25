@@ -10,8 +10,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QObject, QPoint, QSize, Qt, QUrl, Slot
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtCore import QObject, QPoint, Qt, QUrl, Slot
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (
@@ -32,79 +31,69 @@ log = get_logger("ui.main_window")
 # ═════════════════════════════════════════════════════════════════
 
 class TitleBar(QWidget):
-    """Slim frameless title bar: app name + minimize / maximize / close."""
+    """Slim frameless title bar: logo + app name + minimize / maximize / close."""
 
     def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
         self.setObjectName("TitleBar")
-        self.setFixedHeight(32)
+        self.setFixedHeight(38)
         self._parent = parent
         self._drag_pos: Optional[QPoint] = None
 
-        self.setStyleSheet("background: #1a1d23;")
-
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 0, 0, 0)
+        layout.setContentsMargins(10, 0, 0, 0)
         layout.setSpacing(0)
+
+        # Logo badge
+        logo = QLabel("T")
+        logo.setObjectName("titlebar_logo")
+        logo.setFixedSize(24, 24)
+        logo.setAlignment(Qt.AlignCenter)
+        layout.addWidget(logo)
 
         # App title
         title = QLabel("TradeOS India")
-        title.setStyleSheet(
-            "font-size: 12px; font-weight: 600; color: #858585;"
-            " background: transparent;"
-        )
+        title.setObjectName("titlebar_title")
         layout.addWidget(title)
+
+        # Subtle separator dot
+        dot = QLabel("\u2022")
+        dot.setObjectName("titlebar_dot")
+        layout.addWidget(dot)
+
+        # Version / subtitle
+        subtitle = QLabel("v1.0")
+        subtitle.setObjectName("titlebar_version")
+        layout.addWidget(subtitle)
+
         layout.addStretch()
 
-        # Window control buttons
-        for draw_fn, obj_name, slot in [
-            (self._draw_minimize_icon, "btn_min", self._parent.showMinimized),
-            (self._draw_maximize_icon, "btn_max", self._toggle_maximize),
-            (self._draw_close_icon, "btn_close", self._parent.close),
-        ]:
-            btn = QPushButton()
+        # Window control buttons — inline styles override global QSS
+        btn_base = (
+            "QPushButton {{ background: transparent; border: none;"
+            " border-radius: 0px; padding: 0px; color: {icon};"
+            " font-family: 'Segoe MDL2 Assets', 'Segoe UI Symbol', sans-serif;"
+            " font-size: 10px; font-weight: normal; }}"
+            " QPushButton:hover {{ background: {hover}; color: {hover_fg}; }}"
+            " QPushButton:pressed {{ background: {pressed}; color: {hover_fg}; }}"
+        )
+        btn_defs = [
+            ("\uE921", "btn_min", self._parent.showMinimized, False),   # minimize
+            ("\uE922", "btn_max", self._toggle_maximize, False),        # maximize
+            ("\uE8BB", "btn_close", self._parent.close, True),          # close
+        ]
+        for text, obj_name, slot, is_close in btn_defs:
+            btn = QPushButton(text)
             btn.setObjectName(obj_name)
-            btn.setFixedSize(46, 32)
-            btn.setIcon(draw_fn())
-            btn.setIconSize(QSize(10, 10))
-            hover_bg = "#e81123" if obj_name == "btn_close" else "#383838"
-            btn.setStyleSheet(
-                f"QPushButton {{ background: transparent; border: none; }}"
-                f" QPushButton:hover {{ background-color: {hover_bg}; }}"
-            )
+            btn.setFixedSize(46, 38)
+            btn.setStyleSheet(btn_base.format(
+                icon="#999999",
+                hover="#e81123" if is_close else "#3e3e3e",
+                hover_fg="#ffffff",
+                pressed="#f1707a" if is_close else "#555555",
+            ))
             btn.clicked.connect(slot)
             layout.addWidget(btn)
-
-    @staticmethod
-    def _draw_minimize_icon() -> QIcon:
-        pix = QPixmap(10, 10)
-        pix.fill(Qt.transparent)
-        p = QPainter(pix)
-        p.setPen(QPen(QColor("#cccccc"), 1))
-        p.drawLine(0, 5, 9, 5)
-        p.end()
-        return QIcon(pix)
-
-    @staticmethod
-    def _draw_maximize_icon() -> QIcon:
-        pix = QPixmap(10, 10)
-        pix.fill(Qt.transparent)
-        p = QPainter(pix)
-        p.setPen(QPen(QColor("#cccccc"), 1))
-        p.drawRect(0, 0, 9, 9)
-        p.end()
-        return QIcon(pix)
-
-    @staticmethod
-    def _draw_close_icon() -> QIcon:
-        pix = QPixmap(10, 10)
-        pix.fill(Qt.transparent)
-        p = QPainter(pix)
-        p.setPen(QPen(QColor("#cccccc"), 1.2))
-        p.drawLine(0, 0, 9, 9)
-        p.drawLine(9, 0, 0, 9)
-        p.end()
-        return QIcon(pix)
 
     def _toggle_maximize(self) -> None:
         if self._parent.isMaximized():
